@@ -1,5 +1,5 @@
 void GpsInit();
-void  displayInfo();
+ void  displayInfo();
 // void gps_data() ;
 void smartDelay(unsigned long ms);
 std::string add_string (float data );

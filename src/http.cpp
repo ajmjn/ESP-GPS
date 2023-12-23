@@ -499,6 +499,7 @@ _WebServer.on("/config/set_mqtt_topics", []() {
         trigger reboot
     */
     StateChange(STATE_WAIT_BEFORE_REBOOTING);
+    
   });
 
   _WebServer.on("/info", []() {

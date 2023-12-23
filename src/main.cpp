@@ -9,12 +9,24 @@
 #include "state.h"
 #include "util.h"
 #include "watchdog.h"
+#include "TaskManagerIO.h"
+#include "elm327.h"
 #if defined(ESP32)
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 #include "gps.h"
 #include "gsm.h"
 #endif
+TaskHandle_t blink;
+TaskHandle_t rpm_task;
+void get_rpm_task(void* parameters)
+{
+    for (;;)
+    {
+       obd_mqtt_update();
+      vTaskDelay(pdMS_TO_TICKS(300000));
+    }
+}
 
 void setup()
 {
@@ -50,19 +62,32 @@ void setup()
     }
   }
   
-   gsm_init();
-   GpsInit();
-   
+ gsm_init();
+  GpsInit();
+  elm_init();
+   xTaskCreatePinnedToCore(
+        get_rpm_task, // Task function.
+        "Task1",      // Name of task.
+        10000,        // Stack size of task
+        NULL,         // Parameter of the task
+        1,            // Priority of the task
+        &rpm_task,    // Task handle to keep track of created task
+        0);           // Pin task to core 0
+
+ //  xTaskCreate(&vLEDFlashTask, "blink_task", configMINIMAL_STACK_SIZE, NULL, 5, NULL);
+  // xTaskCreate(&elmtask, "elm_task", configMINIMAL_STACK_SIZE, NULL, 6, NULL);
+ 
+  //taskManager.schedule(repeatSeconds(1),elm_test);
+  //taskid_t taskId3 = taskManager.schedule(repeatSeconds(10),gsm_mqtt_update);
  
 }
 
 void loop()
 {
+  
+displayInfo();
+gsm_mqtt_update();
  
-  smartDelay(1000);
-  displayInfo();
-  gsm_mqtt_update();
- 
-  delay(1000);
+delay(5000);
  
 }

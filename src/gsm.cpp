@@ -7,6 +7,7 @@
 #include "gps.h"
 #include <TinyGsmClient.h>
 #include <SoftwareSerial.h>
+#include "elm327.h"
 #define TINY_GSM_DEBUG SerialMon
 #define GSM_AUTOBAUD_MIN 9600
 #define GSM_AUTOBAUD_MAX 57600
@@ -27,12 +28,11 @@ const char gprsUser[] = "";
 const char gprsPass[] = "";
 const char* broker = "broker.mqtt.cool";
 const char* get_gps_data = "";
+const char* get_obd_data = "";
 
-const char* topicLed       = "GsmClientTest/led";
-const char* topicInit      = "GsmClientTest/init";
-const char* topicLedStatus = "GsmClientTest/ledStatus";
-SoftwareSerial SerialAT(11, 12);
-TinyGsm        modem(SerialAT);
+EspSoftwareSerial::UART swSer;
+//SoftwareSerial SerialAT(11, 12);
+TinyGsm        modem(swSer);
 TinyGsmClient client(modem);
 PubSubClient  mqtt(client);
 uint32_t lastReconnectAttempt = 0;
@@ -41,16 +41,18 @@ boolean mqttConnect();
 void gsm_init()
 {
     //TinyGsmAutoBaud(SerialAT, GSM_AUTOBAUD_MIN, GSM_AUTOBAUD_MAX);
-    SerialAT.begin(9600);
-
-     DBG("Initializing modem...");
+    //SerialAT.begin(9600);
+    swSer.begin(9600, EspSoftwareSerial::SWSERIAL_8N1, 11, 12);
+    SerialMon.print("Initializing modem...");
    
   String name = modem.getModemName();
-  DBG("Modem Name:", name);
+  SerialMon.print("Modem Name:");
+ 
 
   String modemInfo = modem.getModemInfo();
-  DBG("Modem Info:", modemInfo);
-  DBG("Waiting for network...");
+ SerialMon.print("Modem Info:");
+ 
+ SerialMon.print("Waiting for network...");
   if (!modem.waitForNetwork(6000L, true)) {
     DBG("Unable to connect to the Network");
   }
@@ -61,7 +63,7 @@ void gsm_init()
    SerialMon.print(_config.configgprs.gprs_apn);
   if (!modem.gprsConnect(_config.configgprs.gprs_apn)) {
     SerialMon.println(" fail");
-    delay(10000);
+    delay(1000);
     return;
   }
   SerialMon.println(" success");
@@ -110,8 +112,8 @@ boolean mqttConnect() {
     return false;
   }
   SerialMon.println(" success");
-  mqtt.publish(topicInit, "GsmClientTest started");
-  mqtt.subscribe(topicLed);
+  // mqtt.publish(topi, "GsmClientTest started");
+  // mqtt.subscribe(topi);
   return mqtt.connected();
 }
 
@@ -152,4 +154,72 @@ SerialMon.println("mqtt update called");
  else
  SerialMon.println("gps data invalid");
   mqtt.loop();
+}
+
+
+void obd_mqtt_update() {
+  // Make sure we're still registered on the network
+  if (!modem.isNetworkConnected()) {
+    SerialMon.println("Network disconnected");
+    if (!modem.waitForNetwork(180000L, true)) {
+      SerialMon.println(" fail");
+      delay(10000);
+      return;
+    }
+    if (modem.isNetworkConnected()) {
+      SerialMon.println("Network re-connected");
+    }
+  }
+  if (!mqtt.connected()) {
+    SerialMon.println("=== MQTT NOT CONNECTED ===");
+    // Reconnect every 10 seconds
+    uint32_t t = millis();
+    if (t - lastReconnectAttempt > 10000L) {
+      lastReconnectAttempt = t;
+      if (mqttConnect()) { lastReconnectAttempt = 0; }
+    }
+    delay(100);
+    return;
+  }
+
+
+SerialMon.println("mqtt update called");
+
+ get_obd_data = send_obd_data().c_str();
+ 
+ SerialMon.println("mqtt update for obd data");
+ SerialMon.println(get_obd_data);
+ mqtt.publish("C",get_obd_data);
+ SerialMon.println("gps data invalid");
+  mqtt.loop();
+}
+
+
+
+void mqtt_check()
+{
+   if (!modem.isNetworkConnected()) {
+    SerialMon.println("Network disconnected");
+    if (!modem.waitForNetwork(180000L, true)) {
+      SerialMon.println(" fail");
+      delay(10000);
+      return;
+    }
+    if (modem.isNetworkConnected()) {
+      SerialMon.println("Network re-connected");
+    }
+  }
+  if (!mqtt.connected()) {
+    SerialMon.println("=== MQTT NOT CONNECTED ===");
+    // Reconnect every 10 seconds
+    uint32_t t = millis();
+    if (t - lastReconnectAttempt > 10000L) {
+      lastReconnectAttempt = t;
+      if (mqttConnect()) { lastReconnectAttempt = 0; }
+    }
+    delay(100);
+    return;
+  }
+  mqtt.loop();
+  SerialMon.println("mqtt update");
 }

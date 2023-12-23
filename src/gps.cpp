@@ -6,12 +6,14 @@
 
 static const uint32_t GPSBaud = 9600;
 TinyGPSPlus gps;
-SoftwareSerial gps_serial(5, 4);
+//SoftwareSerial gps_serial(5, 4);
+EspSoftwareSerial::UART gps_serial;
 std::string gps_data = "";
 void GpsInit()
 {
     
-    gps_serial.begin(9600);
+   // gps_serial.begin(9600);
+    gps_serial.begin(9600, EspSoftwareSerial::SWSERIAL_8N1, 5, 4);
 
 }
 
@@ -41,7 +43,7 @@ void smartDelay(unsigned long ms)
       gps.encode(gps_serial.read());
   } while (millis() - start < ms);
 }
-void displayInfo()
+ void displayInfo()
 {
   Serial.print(F("Location: ")); 
   if (gps.location.isValid())

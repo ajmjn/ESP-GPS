@@ -1,0 +1,43 @@
+The Formula and Data Mapping
+1.	FUEL_PRESSURE - Send to the server if the value would be less than 300 kPa, and send again when the value will be greater than 300 kPa:
+o	float fuelPressure();
+2.	FUEL_TANK_LEVEL_INPUT - Every 5 mins
+o	float fuelLevel();
+3.	VEHICLE_SPEED  - Every 5 secs
+o	float mph();
+4.	FIVE_MIN_AVERAGE_FUEL_EFFICIENCY – Every 5 mins
+Data:
+o	ENGINE_LOAD = float engineLoad(); 
+o	FUEL_TRIM – (float shortTermFuelTrimBank_1() + float longTermFuelTrimBank_1() + float shortTermFuelTrimBank_2() + float longTermFuelTrimBank_2())/4;
+o	AIR_INTAKE_TEMPERATURE – float intakeAirTemp();
+o	FUEL_CONSUMPTION_RATE – float fuelRate();
+Formula: FIVE_MIN_AVERAGE [100 - (ENGINE_LOAD + FUEL_TRIM + AIR_INTAKE_TEMPERATURE)]/ /FUEL_CONSUMPTION_RATE) 
+5.	FIVE_MIN_AVERAGE_ENGINE_RPM  - Every 5 mins
+o	float rpm();
+6.	FIVE_MIN_AVERAGE_ENGINE_COOLANT_TEMPERATURE – Every 5 mins
+o	float engineCoolantTemp();
+7.	FIVE_MIN_AVERAGE_DRIVER_EFFICIENCY – Every 5 mins
+Data:
+o	VEHICLE_SPEED - float mph(); 
+o	THROTTLE_POSITION – float throttle();
+o	ACCELERATOR_PEDAL_POSITION – float relativePedalPos(); 
+o	ENGINE_RPM – float rpm(); 
+o	FUEL_CONSUMPTION_RATE – float fuelRate();
+Formula: :  {(VEHICLE_SPEED * THROTTLE_POSITION * ACCELERATOR_PEDAL_POSITION) / (ENGINE_RPM * FUEL_CONSUMPTION_RATE)}/0.02*100) 
+8.	FIVE_MIN_AVERAGE_VEHICLE_PERFORMANCE – Every 5 mins
+Data:
+o	ENGINE_RPM – float rpm(); 
+o	ENGINE_LOAD – float engineLoad(); 
+o	THROTTLE_POSITION – float throttle(); 
+o	AIR_INTAKE_TEMPERATURE – float intakeAirTemp();
+o	OXYGEN_SENSOR_READINGS – (uint8_t oxygenSensorsPresent_2banks() + uint8_t oxygenSensorsPresent_4banks())/2; 
+o	FUEL_AIR_EQUIVALENCE_RATIO – float fuelRate()/(float mafRate()*14.7) ;
+o	FUEL_PRESSURE – float fuelPressure();
+o	INTAKE_MANIFOLD_ABSOLUTE_PRESSURE – uint8_t manifoldPressure();
+Formula: {(ENGINE_RPM * ENGINE_LOAD * THROTTLE_POSITION) / (AIR_INTAKE_TEMPERATURE * OXYGEN_SENSOR_READINGS * FUEL_AIR_EQUIVALENCE_RATIO * FUEL_PRESSURE * INTAKE_MANIFOLD_ABSOLUTE_PRESSURE)}/10*100) 
+9.	FREEZE_DTC - If fault detected
+o	uint16_t freezeDTC();
+10.	ENGINE_RUN_TIME - every 6 months from the first day of the vehicle operation
+o	uint16_t runTime();
+11.	DISTANCE_TRAVELED – Every 24 hours
+o	uint16_t distSinceCodesCleared();
